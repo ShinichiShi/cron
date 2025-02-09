@@ -1,3 +1,5 @@
+jest.mock('axios');
+import axios from 'axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -63,6 +65,9 @@ describe('CronJobService', () => {
     cronJobModel = module.get<Model<CronJobDocument>>(getModelToken('CronJob'));
     jobHistoryModel = module.get<Model<JobHistory>>(getModelToken('JobHistory'));
     schedulerRegistry = module.get<SchedulerRegistry>(SchedulerRegistry);
+
+    // ✅ Mock axios to prevent real HTTP calls
+    (axios.get as jest.Mock).mockResolvedValue({ data: 'success' });
   });
 
   it('should be defined', () => {
@@ -109,11 +114,18 @@ describe('CronJobService', () => {
       }
     });
   });
-});
-afterEach(() => {
-  jest.clearAllMocks();
-  jest.resetModules();
-});
-afterAll(async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    try {
+      const job = schedulerRegistry.getCronJob('test-id');
+      job.stop();
+    } catch (error) {
+    }
+  });
+
+  afterAll(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  });
 });
