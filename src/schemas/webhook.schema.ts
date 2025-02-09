@@ -1,15 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Document, SchemaTypes, Types } from 'mongoose';
 
-export type WebhookDataDocument = HydratedDocument<WebhookData>;
+export type WebhookDataDocument = WebhookData & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class WebhookData {
-  @Prop({ type: Object, required: true })
-  data: any;
+  _id: Types.ObjectId;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  @Prop({ type: SchemaTypes.Mixed, required: true })
+  data: Record<string, any>;
+
+  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'CronJob' })
+  cronJobId: Types.ObjectId;
 }
 
 export const WebhookDataSchema = SchemaFactory.createForClass(WebhookData);

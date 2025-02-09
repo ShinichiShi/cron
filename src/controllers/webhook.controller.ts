@@ -6,8 +6,8 @@ export class WebhookController {
   constructor(private readonly webhookService: WebhookService) {}
 
   @Post()
-  async receiveData(@Body() body) {
-    return this.webhookService.storeWebhookData(body);
+  async create(@Body() webhookData: Record<string, any>) {
+    return this.webhookService.create(webhookData);
   }
 
   @Get()

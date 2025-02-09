@@ -1,27 +1,29 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type CronJobDocument = HydratedDocument<CronJob>;
+export type CronJobDocument = CronJob & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class CronJob {
+  _id: Types.ObjectId;
+
   @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
-  url: string;
+  triggerLink: string;
 
   @Prop({ required: true })
   apiKey: string;
 
   @Prop({ required: true })
-  schedule: string; // "weekly", "monthly", etc.
+  schedule: string;
 
   @Prop({ required: true })
   startDate: Date;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  @Prop({ default: true })
+  isActive: boolean;
 }
 
 export const CronJobSchema = SchemaFactory.createForClass(CronJob);
