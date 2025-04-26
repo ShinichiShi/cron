@@ -18,7 +18,12 @@ async function bootstrap() {
       ],
     }),
   });
-  app.enableCors();
+
+  app.enableCors({
+    origin: 'https://cron-sand-two.vercel.app',
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT || 5000);
 }
 bootstrap();
