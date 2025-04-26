@@ -3,7 +3,7 @@
  * @param dateString ISO date string
  * @returns Formatted date string
  */
-export const formatDate = (dateString: string): string => {
+export const formatDate  = (dateString: string): string => {
   const options: Intl.DateTimeFormatOptions = { 
     year: 'numeric', 
     month: 'short', 
@@ -14,7 +14,16 @@ export const formatDate = (dateString: string): string => {
   
   return new Date(dateString).toLocaleDateString(undefined, options);
 };
-
+export const formatTime = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
 /**
  * Get a human-readable description of a cron schedule
  * This is a simplified version and doesn't handle all possible cron expressions
@@ -24,8 +33,6 @@ export const describeCronSchedule = (cronExpression: string): string => {
   if (!cronExpression) return 'Invalid schedule';
   
   const parts = cronExpression.split(' ');
-  
-  // Very basic interpretation
   if (parts.length >= 6) {
     if (parts[0] === '*' && parts[1] === '*') {
       return 'Every minute';
@@ -36,7 +43,5 @@ export const describeCronSchedule = (cronExpression: string): string => {
       return `Every ${seconds} seconds`;
     }
   }
-  
-  // Fallback for complex expressions
   return 'Custom schedule';
 };

@@ -71,8 +71,12 @@ const CronJobForm: React.FC<CronJobFormProps> = ({ onSuccess, onError }) => {
       const startDate = new Date(formData.startDate);
       startDate.setHours(0, 0, 0, 0);
       
+      // Make sure we're passing the correct shape of data as expected by the API
       await api.createCronJob({
-        ...formData,
+        name: formData.name,
+        triggerLink: formData.triggerLink,
+        apiKey: formData.apiKey,
+        schedule: formData.schedule,
         startDate: startDate.toISOString()
       });
       
@@ -94,10 +98,10 @@ const CronJobForm: React.FC<CronJobFormProps> = ({ onSuccess, onError }) => {
   };
 
   return (
-    <div className="bg-gray-800 shadow-lg shadow-purple-900/20 sm:rounded-lg overflow-hidden border border-gray-700">
+    <div className="overflow-hidden bg-gray-800 border border-gray-700 shadow-lg shadow-purple-900/20 sm:rounded-lg">
       <div className="px-4 py-5 sm:p-6">
-        <h3 className="text-lg leading-6 font-medium text-white">Create a new Cron Job</h3>
-        <div className="mt-2 max-w-xl text-sm text-gray-300">
+        <h3 className="text-lg font-medium leading-6 text-white">Create a new Cron Job</h3>
+        <div className="max-w-xl mt-2 text-sm text-gray-300">
           <p>Schedule automated tasks with precise timing control.</p>
         </div>
         
@@ -158,7 +162,7 @@ const CronJobForm: React.FC<CronJobFormProps> = ({ onSuccess, onError }) => {
                   id="apiKey"
                   value={formData.apiKey}
                   onChange={handleChange}
-                  className="shadow-sm bg-gray-700 focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-600 rounded-md text-white placeholder-gray-400"
+                  className="block w-full text-white placeholder-gray-400 bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                   placeholder="Your API key if required"
                 />
               </div>
@@ -214,7 +218,7 @@ const CronJobForm: React.FC<CronJobFormProps> = ({ onSuccess, onError }) => {
           <div className="flex justify-end">
             <button
               type="button"
-              className="bg-gray-700 py-2 px-4 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-800"
+              className="px-4 py-2 text-sm font-medium text-gray-200 bg-gray-700 border border-gray-600 rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-800"
               onClick={() => {
                 setFormData({
                   name: '',

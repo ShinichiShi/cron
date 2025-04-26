@@ -17,7 +17,15 @@ export class CronJobController {
   findAll() {
     return this.cronJobService.findAll();
   }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.cronJobService.findOne(id);
+  }
 
+  @Get(':id/history')
+  getJobHistory(@Param('id') id: string) {
+    return this.cronJobService.getJobHistory(id);
+  }
   @Put(':id')
   update(@Param('id') id: string, @Body() updateCronJobDto: CreateCronJobDto) {
     return this.cronJobService.update(id, updateCronJobDto);

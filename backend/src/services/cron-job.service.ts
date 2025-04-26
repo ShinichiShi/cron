@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -9,7 +9,7 @@ import { JobHistory } from 'src/schemas/job-history.schema';
 import { CreateCronJobDto } from 'src/dto/create-cron-job.dto';
 import { CronJob } from 'src/schemas/cron-job.schema';
 @Injectable()
-export class CronJobService {
+export class CronJobService implements OnModuleInit  {
   private readonly logger = new Logger(CronJobService.name);
 
   constructor(
@@ -26,7 +26,18 @@ export class CronJobService {
     await this.scheduleCronJob(createdCronJob);
     return createdCronJob;
   }
-
+  async onModuleInit() {
+    const jobs = await this.cronJobModel.find().exec();
+    this.logger.log(`Loading ${jobs.length} cron jobs from database`);
+    for (const job of jobs) {
+      try {
+        await this.scheduleCronJob(job);
+        this.logger.log(`Scheduled job: ${job.name} (${job._id})`);
+      } catch (error) {
+        this.logger.error(`Failed to schedule job ${job._id}: ${error.message}`);
+      }
+    }
+  }
   private async scheduleCronJob(job: CronJobDocument) {
     const cronJob = new CronJobType(job.schedule, async () => {
       try {
@@ -60,19 +71,27 @@ export class CronJobService {
   async findAll() {
     return this.cronJobModel.find().exec();
   }
-
+  async findOne(id: string) {
+    return this.cronJobModel.findById(id).exec();
+  }
+  
+  async getJobHistory(cronJobId: string) {
+    return this.jobHistoryModel.find({ cronJobId }).sort({ executionTime: -1 }).exec();
+  }
   async update(id: string, updateCronJobDto: CreateCronJobDto) {
     const job = await this.cronJobModel.findByIdAndUpdate(
       id,
       updateCronJobDto,
-      {
-        new: true,
-      },
+      { new: true },
     );
     if (job) {
-      const existingJob = this.schedulerRegistry.getCronJob(id);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(id);
+      try {
+        const existingJob = this.schedulerRegistry.getCronJob(id);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(id);
+      } catch (error) {
+        this.logger.warn(`Cron job ${id} wasn't found in registry during update`,error);
+      }
       await this.scheduleCronJob(job);
     }
     return job;
@@ -81,9 +100,13 @@ export class CronJobService {
   async delete(id: string) {
     const job = await this.cronJobModel.findByIdAndDelete(id);
     if (job) {
-      const existingJob = this.schedulerRegistry.getCronJob(id);
-      existingJob.stop();
-      this.schedulerRegistry.deleteCronJob(id);
+      try {
+        const existingJob = this.schedulerRegistry.getCronJob(id);
+        existingJob.stop();
+        this.schedulerRegistry.deleteCronJob(id);
+      } catch (error) {
+        this.logger.warn(`Cron job ${id} wasn't found in registry during deletion`,error);
+      }
     }
     return job;
   }

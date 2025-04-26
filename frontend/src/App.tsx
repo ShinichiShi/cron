@@ -5,7 +5,6 @@ import Dashboard from './components/Dashboard';
 
 function App() {
   useEffect(() => {
-    // Page load animation
     anime({
       targets: '.fade-in',
       opacity: [0, 1],
