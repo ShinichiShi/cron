@@ -20,8 +20,13 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: 'https://cron-sand-two.vercel.app',
+    origin: [
+      'https://cron-sand-two.vercel.app',
+      'http://localhost:5173',
+    ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   await app.listen(process.env.PORT || 5000);
