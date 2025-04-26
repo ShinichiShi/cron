@@ -4,6 +4,7 @@ import CronJobForm from '../components/CronJobForm';
 import CronJobList from '../components/CronJobList';
 import Notification from '../components/Notification';
 import CronJobDetailsModal from '../components/CronJobDetailsModal';
+import EditCronJobModal from '../components/EditCronJobModal';
 import { CronJob } from '../lib/api';
 type NotificationType = 'success' | 'error' | 'info';
 
@@ -18,6 +19,10 @@ const Dashboard: React.FC = () => {
   
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  
+  // Add state for edit modal
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<CronJob | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     loadCronJobs();
@@ -65,6 +70,22 @@ const Dashboard: React.FC = () => {
     setIsDetailsModalOpen(false);
   };
 
+  // Add handlers for edit modal
+  const handleJobEdit = (cronJob: CronJob) => {
+    setSelectedJobForEdit(cronJob);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedJobForEdit(null);
+  };
+
+  const handleEditSuccess = () => {
+    showNotification('success', 'Cron job updated successfully');
+    loadCronJobs();
+  };
+
   return (
     <div className="space-y-8">
       <Notification
@@ -74,7 +95,6 @@ const Dashboard: React.FC = () => {
         onClose={hideNotification}
       />
 
-      {/* Details Modal */}
       {selectedJobId && (
         <CronJobDetailsModal
           cronJobId={selectedJobId}
@@ -82,6 +102,13 @@ const Dashboard: React.FC = () => {
           onClose={handleCloseDetailsModal}
         />
       )}
+
+      <EditCronJobModal
+        cronJob={selectedJobForEdit}
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSave={handleEditSuccess}
+      />
 
       <div>
         <h1 className="text-2xl font-semibold text-white">Cron Job Dashboard</h1>
@@ -106,6 +133,7 @@ const Dashboard: React.FC = () => {
               isLoading={isLoading} 
               onViewDetails={handleViewDetails}
               onJobDelete={loadCronJobs}
+              onJobEdit={handleJobEdit}
             />
           </div>
         </div>

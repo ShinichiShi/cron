@@ -7,13 +7,15 @@ interface CronJobListProps {
   isLoading: boolean;
   onViewDetails: (jobId: string) => void;
   onJobDelete: () => void;
+  onJobEdit: (cronJob: CronJob) => void;
 }
 
 const CronJobList: React.FC<CronJobListProps> = ({ 
   cronJobs, 
   isLoading,
   onViewDetails,
-  onJobDelete
+  onJobDelete,
+  onJobEdit
 }) => {
   if (isLoading) {
     return (
@@ -41,6 +43,7 @@ const CronJobList: React.FC<CronJobListProps> = ({
         cronJob={job} 
         onDelete={onJobDelete}
         onViewDetails={() => onViewDetails(job._id)}
+        onEdit={onJobEdit}
         />
       );
       })}
