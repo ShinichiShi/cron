@@ -29,4 +29,4 @@ COPY package*.json ./
 EXPOSE 3000
 
 # Start the compiled app
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
