@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsDateString } from 'class-validator';
 
 export class CreateCronJobDto {
   @IsNotEmpty()
@@ -9,7 +9,7 @@ export class CreateCronJobDto {
   @IsString()
   triggerLink: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   apiKey: string;
 

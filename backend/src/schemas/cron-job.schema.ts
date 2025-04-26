@@ -13,8 +13,8 @@ export class CronJob {
   @Prop({ required: true })
   triggerLink: string;
 
-  @Prop({ required: true })
-  apiKey: string;
+  @Prop({ required: false })
+  apiKey?: string;
 
   @Prop({ required: true })
   schedule: string;

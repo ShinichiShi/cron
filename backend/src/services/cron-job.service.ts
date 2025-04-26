@@ -30,10 +30,11 @@ export class CronJobService {
   private async scheduleCronJob(job: CronJobDocument) {
     const cronJob = new CronJobType(job.schedule, async () => {
       try {
-        const response = await axios.get(job.triggerLink, {
-          headers: { 'X-API-Key': job.apiKey },
-        });
-
+        const requestConfig = {};
+        if (job.apiKey && job.apiKey.trim() !== '') {
+          requestConfig['headers'] = { 'X-API-Key': job.apiKey };
+        }
+        const response = await axios.get(job.triggerLink, requestConfig);
         await this.jobHistoryModel.create({
           cronJobId: job._id,
           response: JSON.stringify(response.data),
