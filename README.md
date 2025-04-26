@@ -66,6 +66,8 @@ curl -X POST http://localhost:3000/cron-jobs
 | `GET`   | `/webhooks`| Get all received webhooks |
 
 ---
-
+## Screenshots 
+![screenshot1](image.png)
+![screenshot2](<Screenshot from 2025-04-26 22-52-40.png>)
 ## 📜 License
 This project is licensed under the [MIT License](LICENSE).
