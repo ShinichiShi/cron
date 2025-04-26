@@ -46,14 +46,17 @@ To setup the project, kindly refer to [SETUP.md](SETUP.md)
 | `DELETE`| `/cron-jobs/:id`| Delete a cron job      |
 
 ### Request Body (Create/Update)
+curl -X POST http://localhost:3000/cron-jobs   
+     -H "Content-Type: application/json"  
+     -d '
 ```json
-{
-  "name": "Test Job",
-  "triggerLink": "https://api.example.com/trigger",
-  "apiKey": "your-api-key",
-  "schedule": "*/5 * * * *",
-  "startDate": "2025-02-09T12:00:00Z"
-}
+  {
+    "name": "Test API",
+    "triggerLink": "https://api.animechan.io/v1/quotes/random",
+    "apiKey": "",
+    "schedule": "*/30 * * * * *",
+    "startDate": "2025-04-24T07:54:02.992Z" //add your latest timestamp
+  }'
 ```
 ## 📌 Webhooks
 
