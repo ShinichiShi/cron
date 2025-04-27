@@ -31,5 +31,6 @@ import { WebhookService } from './services/webhook.service';
   ],
   controllers: [CronJobController, WebhookController],
   providers: [CronJobService, WebhookService],
+  exports: [WebhookService],
 })
 export class AppModule {}

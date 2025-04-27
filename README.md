@@ -33,6 +33,11 @@ This is a **NestJS-based Cron Job Service** that allows users to **create, updat
  
 To setup the project, kindly refer to [SETUP.md](SETUP.md)
 
+## 🌐 Live Service
+### **You can access the live backend service at: https://cron-z85p.onrender.com**
+
+#### Append the endpoints documented below to interact with the service.
+
 ---
 
 ## 📌 Cron Jobs
@@ -46,18 +51,18 @@ To setup the project, kindly refer to [SETUP.md](SETUP.md)
 | `DELETE`| `/cron-jobs/:id`| Delete a cron job      |
 
 ### Request Body (Create/Update)
+```bash
 curl -X POST http://localhost:3000/cron-jobs   
      -H "Content-Type: application/json"  
-     -d '
-```json
-  {
+     -d '{
     "name": "Test API",
     "triggerLink": "https://api.animechan.io/v1/quotes/random",
     "apiKey": "",
     "schedule": "*/30 * * * * *",
-    "startDate": "2025-04-24T07:54:02.992Z" //add your latest timestamp
+    "startDate": "2025-04-24T07:54:02.992Z" #add your latest timestamp
   }'
 ```
+
 ## 📌 Webhooks
 
 | Method  | Endpoint    | Description           |

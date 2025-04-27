@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, BadRequestException } from '@nestjs/common';
 import { WebhookService } from '../services/webhook.service';
 
 @Controller('webhook')
@@ -13,5 +13,13 @@ export class WebhookController {
   @Get()
   async getWebhooks() {
     return this.webhookService.getWebhookData();
+  }
+  @Get('cron-job/:id')
+  async getWebhooksByCronJob(@Param('id') cronJobId: string) {
+    try {
+      return this.webhookService.findByCronJobId(cronJobId);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }

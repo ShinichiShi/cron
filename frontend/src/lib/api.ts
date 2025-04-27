@@ -20,6 +20,14 @@ export interface JobHistory {
   executionTime: string;
 }
 
+export interface WebhookData {
+  _id: string;
+  data: Record<string, unknown>;
+  cronJobId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const api = {
   getCronJobs: async (): Promise<CronJob[]> => {
     const response = await axios.get(`${API_BASE_URL}/cron-jobs`);
@@ -47,6 +55,22 @@ export const api = {
   
   getJobHistory: async (cronJobId: string): Promise<JobHistory[]> => {
     const response = await axios.get(`${API_BASE_URL}/cron-jobs/${cronJobId}/history`);
+    return response.data;
+  },
+  
+  // New webhook endpoints
+  getWebhooks: async (): Promise<WebhookData[]> => {
+    const response = await axios.get(`${API_BASE_URL}/webhook`);
+    return response.data;
+  },
+  
+  getWebhooksByCronJob: async (cronJobId: string): Promise<WebhookData[]> => {
+    const response = await axios.get(`${API_BASE_URL}/webhook/cron-job/${cronJobId}`);
+    return response.data;
+  },
+  
+  createWebhook: async (webhookData: { data: Record<string, unknown>, cronJobId: string }): Promise<WebhookData> => {
+    const response = await axios.post(`${API_BASE_URL}/webhook`, webhookData);
     return response.data;
   }
 };

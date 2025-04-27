@@ -29,13 +29,13 @@ const Notification: React.FC<NotificationProps> = ({
   if (!isVisible) return null;
 
   const bgColor = type === 'success' 
-    ? 'bg-green-900/90 border-green-500'
+    ? 'bg-purple-900/90 border-purple-500'
     : type === 'error' 
       ? 'bg-red-900/90 border-red-500'
       : 'bg-blue-900/90 border-blue-500';
   
   const textColor = type === 'success' 
-    ? 'text-green-100'
+    ? 'text-purple-100'
     : type === 'error' 
       ? 'text-red-100'
       : 'text-blue-100';
@@ -49,7 +49,7 @@ const Notification: React.FC<NotificationProps> = ({
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
-            <Icon className={`h-5 w-5 ${type === 'success' ? 'text-green-300' : type === 'error' ? 'text-red-300' : 'text-blue-300'}`} />
+            <Icon className={`h-5 w-5 ${type === 'success' ? 'text-purple-300' : type === 'error' ? 'text-red-300' : 'text-blue-300'}`} />
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             <p className={`text-sm font-medium ${textColor}`}>{message}</p>

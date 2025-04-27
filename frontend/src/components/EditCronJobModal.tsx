@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 import { CronJob, api } from '../lib/api';
+import EditJobWebhookTab from './EditJobWebhookTab';
 
 interface EditCronJobModalProps {
   cronJob: CronJob | null;
@@ -9,38 +9,36 @@ interface EditCronJobModalProps {
   onSave: () => void;
 }
 
-const EditCronJobModal: React.FC<EditCronJobModalProps> = ({ 
-  cronJob, 
-  isOpen, 
+const EditCronJobModal: React.FC<EditCronJobModalProps> = ({
+  cronJob,
+  isOpen,
   onClose,
-  onSave
+  onSave,
 }) => {
-  const [formData, setFormData] = useState<Partial<CronJob>>({
-    name: '',
-    triggerLink: '',
-    schedule: '',
-    startDate: '',
-    apiKey: ''
-  });
+  const [name, setName] = useState('');
+  const [triggerLink, setTriggerLink] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [schedule, setSchedule] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'webhooks'>('details');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (cronJob) {
-      setFormData({
-        name: cronJob.name,
-        triggerLink: cronJob.triggerLink,
-        schedule: cronJob.schedule,
-        startDate: cronJob.startDate.split('T')[0], // Format date for input
-        apiKey: cronJob.apiKey || ''
-      });
+      setName(cronJob.name);
+      setTriggerLink(cronJob.triggerLink);
+      setApiKey(cronJob.apiKey || '');
+      setSchedule(cronJob.schedule);
+      
+      // Format date for input
+      const date = new Date(cronJob.startDate);
+      const formattedDate = date.toISOString().split('T')[0];
+      setStartDate(formattedDate);
+      
+      setError(null);
     }
   }, [cronJob]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,131 +48,184 @@ const EditCronJobModal: React.FC<EditCronJobModalProps> = ({
     setError(null);
     
     try {
-      await api.updateCronJob(cronJob._id, formData);
+      await api.updateCronJob(cronJob._id, {
+        name,
+        triggerLink,
+        apiKey: apiKey || undefined,
+        schedule,
+        startDate,
+      });
+      
       onSave();
       onClose();
     } catch (err) {
-      setError('Failed to update cron job');
       console.error('Error updating cron job:', err);
+      setError('Failed to update cron job');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !cronJob) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">Edit Cron Job</h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        
-        {error && (
-          <div className="p-3 mb-4 text-sm text-red-200 rounded bg-red-900/50">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-300">
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="triggerLink" className="block mb-1 text-sm font-medium text-gray-300">
-              Trigger URL
-            </label>
-            <input
-              type="url"
-              id="triggerLink"
-              name="triggerLink"
-              value={formData.triggerLink}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="schedule" className="block mb-1 text-sm font-medium text-gray-300">
-              Cron Schedule
-            </label>
-            <input
-              type="text"
-              id="schedule"
-              name="schedule"
-              value={formData.schedule}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="*/5 * * * *"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="startDate" className="block mb-1 text-sm font-medium text-gray-300">
-              Start Date
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-6">
-            <label htmlFor="apiKey" className="block mb-1 text-sm font-medium text-gray-300">
-              API Key (optional)
-            </label>
-            <input
-              type="text"
-              id="apiKey"
-              name="apiKey"
-              value={formData.apiKey || ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-3">
+    <div className="fixed inset-0 z-10 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 text-center">
+        <div className="fixed inset-0 transition-opacity bg-black bg-opacity-75" onClick={onClose} />
+
+        <div className="inline-block w-full max-w-2xl overflow-hidden text-left align-middle transition-all transform bg-gray-800 rounded-lg shadow-xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+            <h3 className="text-xl font-medium text-white">
+              Edit Cron Job
+            </h3>
             <button
               type="button"
+              className="text-gray-400 hover:text-white"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded hover:bg-gray-600"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              <span className="sr-only">Close</span>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-        </form>
+
+          <div className="border-b border-gray-700">
+            <nav className="flex">
+              <button
+                className={`px-4 py-2 font-medium text-sm border-b-2 ${
+                  activeTab === 'details'
+                    ? 'border-purple-500 text-purple-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
+                onClick={() => setActiveTab('details')}
+              >
+                Job Details
+              </button>
+              <button
+                className={`px-4 py-2 font-medium text-sm border-b-2 ${
+                  activeTab === 'webhooks'
+                    ? 'border-purple-500 text-purple-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
+                onClick={() => setActiveTab('webhooks')}
+              >
+                Webhook Testing
+              </button>
+            </nav>
+          </div>
+
+          <div className="px-6 py-4">
+            {activeTab === 'details' ? (
+              <form onSubmit={handleSubmit}>
+                {error && (
+                  <div className="p-3 mb-4 text-sm text-red-400 bg-red-900 rounded-md bg-opacity-20">
+                    {error}
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="block w-full mt-1 text-white bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="triggerLink" className="block text-sm font-medium text-gray-300">
+                      Trigger Link
+                    </label>
+                    <input
+                      type="url"
+                      id="triggerLink"
+                      value={triggerLink}
+                      onChange={(e) => setTriggerLink(e.target.value)}
+                      className="block w-full mt-1 text-white bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300">
+                      API Key (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="apiKey"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className="block w-full mt-1 text-white bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="schedule" className="block text-sm font-medium text-gray-300">
+                      Schedule (Cron Expression)
+                    </label>
+                    <input
+                      type="text"
+                      id="schedule"
+                      value={schedule}
+                      onChange={(e) => setSchedule(e.target.value)}
+                      placeholder="* * * * *"
+                      className="block w-full mt-1 text-white bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-300">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      id="startDate"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="block w-full mt-1 text-white bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end mt-6 space-x-3">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-md hover:bg-gray-500"
+                    onClick={onClose}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                      isSubmitting ? 'bg-purple-500 opacity-50' : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
+                  >
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <EditJobWebhookTab 
+                cronJob={cronJob} 
+                onSuccess={() => {
+                  onSave();
+                }}
+                onError={(message) => setError(message)}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

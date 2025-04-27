@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, XCircle, X } from 'lucide-react';
 import { CronJob, JobHistory, api } from '../lib/api';
-import { formatDate, formatTime } from '../utils/dateUtils';
+import WebhookList from './WebhookList';
 
 interface CronJobDetailsModalProps {
   cronJobId: string;
@@ -14,32 +14,28 @@ const CronJobDetailsModal: React.FC<CronJobDetailsModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [cronJob, setCronJob] = useState<CronJob | null>(null);
   const [jobHistory, setJobHistory] = useState<JobHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'history' | 'webhooks'>('history');
 
   useEffect(() => {
     if (isOpen && cronJobId) {
-      loadCronJobDetails();
+      loadData();
     }
   }, [isOpen, cronJobId]);
 
-  const loadCronJobDetails = async () => {
+  const loadData = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Get cron job details
-      const jobData = await api.getCronJob(cronJobId);
+      const [jobData, historyData] = await Promise.all([
+        api.getCronJob(cronJobId),
+        api.getJobHistory(cronJobId),
+      ]);
       setCronJob(jobData);
-      
-      // Get history for this cron job
-      const historyData = await api.getJobHistory(cronJobId);
       setJobHistory(historyData);
-    } catch (err) {
-      setError('Failed to load cron job details');
-      console.error('Error loading cron job details:', err);
+    } catch (error) {
+      console.error('Error loading cron job details:', error);
     } finally {
       setIsLoading(false);
     }
@@ -47,129 +43,166 @@ const CronJobDetailsModal: React.FC<CronJobDetailsModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 w-full max-w-4xl max-h-screen overflow-hidden">
-        {/* Modal header */}
-        <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center sticky top-0 bg-gray-800 z-10">
-          <h2 className="text-xl font-semibold text-white">
-            {isLoading ? 'Loading...' : cronJob?.name}
-          </h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
-            <X size={24} />
-          </button>
-        </div>
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
 
-        {/* Modal content */}
-        <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString();
+  };
+
+  return (
+    <div className="fixed inset-0 z-10 overflow-y-auto">
+      <div className="flex items-center justify-center px-4 text-center">
+        <div className="fixed inset-0 transition-opacity bg-black bg-opacity-75" onClick={onClose} />
+
+        <div className="inline-block w-full max-w-4xl overflow-hidden text-left align-middle transition-all transform bg-gray-800 rounded-lg shadow-xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+            <h3 className="text-xl font-medium text-white">
+              {isLoading ? 'Loading...' : cronJob?.name || 'Cron Job Details'}
+            </h3>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-white"
+              onClick={onClose}
+            >
+              <span className="sr-only">Close</span>
+              <X size={24} />
+            </button>
+          </div>
+
           {isLoading ? (
-            <div className="p-6 flex justify-center">
-              <div className="animate-pulse text-purple-400">Loading...</div>
+            <div className="px-6 py-10 text-center">
+              <div className="inline-block w-8 h-8 border-4 border-gray-300 rounded-full border-t-purple-500 animate-spin" />
+              <p className="mt-2 text-gray-400">Loading job details...</p>
             </div>
-          ) : error ? (
-            <div className="p-6 text-red-400">{error}</div>
-          ) : (
+          ) : cronJob ? (
             <>
-              {/* Cron job details section */}
               <div className="p-6 border-b border-gray-700">
-                <h3 className="text-lg font-medium text-white mb-4">Job Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-sm text-gray-400">Trigger URL</p>
-                    <p className="text-white break-all">{cronJob?.triggerLink}</p>
+                    <h4 className="text-sm font-medium text-gray-400">Schedule</h4>
+                    <p className="mt-1 text-white">{cronJob.schedule}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Schedule</p>
-                    <code className="bg-gray-900 px-2 py-1 rounded text-purple-300">{cronJob?.schedule}</code>
+                    <h4 className="text-sm font-medium text-gray-400">Start Date</h4>
+                    <p className="mt-1 text-white">{formatDate(cronJob.startDate)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Start Date</p>
-                    <p className="text-white">{formatDate(cronJob?.startDate || '')}</p>
+                    <h4 className="text-sm font-medium text-gray-400">Trigger Link</h4>
+                    <p className="mt-1 text-sm text-purple-400 truncate">{cronJob.triggerLink}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Created At</p>
-                    <p className="text-white">{formatDate(cronJob?.createdAt || '')}</p>
+                    <h4 className="text-sm font-medium text-gray-400">Created</h4>
+                    <p className="mt-1 text-white">{cronJob.createdAt ? formatDate(cronJob.createdAt) : 'N/A'}</p>
                   </div>
                 </div>
               </div>
+              
+              <div className="border-b border-gray-700">
+                <nav className="flex">
+                  <button
+                    className={`px-4 py-2 font-medium text-sm border-b-2 ${
+                      activeTab === 'history'
+                        ? 'border-purple-500 text-purple-400'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('history')}
+                  >
+                    Execution History
+                  </button>
+                  <button
+                    className={`px-4 py-2 font-medium text-sm border-b-2 ${
+                      activeTab === 'webhooks'
+                        ? 'border-purple-500 text-purple-400'
+                        : 'border-transparent text-gray-400 hover:text-gray-300'
+                    }`}
+                    onClick={() => setActiveTab('webhooks')}
+                  >
+                    Webhook Data
+                  </button>
+                </nav>
+              </div>
 
-              {/* Job history section */}
-              <div className="p-6">
-                <h3 className="text-lg font-medium text-white mb-4">Execution History</h3>
-                
-                {jobHistory.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
-                    No execution history available
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {jobHistory.map((entry, index) => (
-                      <div 
-                        key={index} 
-                        className={`border rounded-lg p-4 ${
-                          entry.status === 'success' ? 'border-green-700 bg-green-900/20' : 'border-red-700 bg-red-900/20'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            {entry.status === 'success' ? (
-                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                            )}
-                            <span className={`font-medium ${
-                              entry.status === 'success' ? 'text-green-400' : 'text-red-400'
-                            }`}>
-                              {entry.status === 'success' ? 'Success' : 'Failed'}
-                            </span>
-                          </div>
-                          <div className="flex items-center text-sm text-gray-400">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            <span>{formatDate(entry.executionTime)}</span>
-                            <Clock className="h-4 w-4 ml-2 mr-1" />
-                            <span>{formatTime(entry.executionTime)}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Response data with collapsible details */}
-                        <div className="mt-2">
-                          <details className="bg-gray-900/50 rounded p-2">
-                            <summary className="cursor-pointer text-gray-300 hover:text-white">
-                              Response Data
-                            </summary>
-                            <div className="mt-2 bg-gray-900 p-3 rounded overflow-auto max-h-60">
-                              {entry.response ? (
-                                <pre className="text-xs text-gray-300 whitespace-pre-wrap">
-                                  {typeof entry.response === 'string' 
-                                    ? entry.response 
-                                    : JSON.stringify(entry.response, null, 2)}
-                                </pre>
+              <div className="px-6 py-4 overflow-y-auto max-h-96">
+                {activeTab === 'history' ? (
+                  jobHistory.length > 0 ? (
+                    <div className="space-y-4">
+                      {jobHistory.map((entry, index) => (
+                        <div 
+                          key={index} 
+                          className={`border rounded-lg p-4 ${
+                            entry.status.toLowerCase() === 'success' ? 'border-green-700 bg-green-900/20' : 'border-red-700 bg-red-900/20'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              {entry.status.toLowerCase() === 'success' ? (
+                                <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
                               ) : (
-                                <p className="text-gray-500 italic">No response data</p>
+                                <XCircle className="w-5 h-5 mr-2 text-red-500" />
                               )}
+                              <span className={`font-medium ${
+                                entry.status.toLowerCase() === 'success' ? 'text-green-400' : 'text-red-400'
+                              }`}>
+                                {entry.status.toLowerCase() === 'success' ? 'Success' : 'Failed'}
+                              </span>
                             </div>
-                          </details>
+                            <div className="flex items-center text-sm text-gray-400">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              <span>{formatDate(entry.executionTime)}</span>
+                              <Clock className="w-4 h-4 ml-2 mr-1" />
+                              <span>{formatTime(entry.executionTime)}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Response data with collapsible details */}
+                          <div className="mt-2">
+                            <details className="p-2 rounded bg-gray-900/50">
+                              <summary className="text-gray-300 cursor-pointer hover:text-white">
+                                Response Data
+                              </summary>
+                              <div className="p-3 mt-2 overflow-auto bg-gray-900 rounded max-h-60">
+                                {entry.response ? (
+                                  <pre className="text-xs text-gray-300 whitespace-pre-wrap">
+                                    {typeof entry.response === 'string' 
+                                      ? entry.response 
+                                      : JSON.stringify(entry.response, null, 2)}
+                                  </pre>
+                                ) : (
+                                  <p className="italic text-gray-500">No response data</p>
+                                )}
+                              </div>
+                            </details>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-gray-400">
+                      No execution history available for this job
+                    </div>
+                  )
+                ) : (
+                  <WebhookList cronJobId={cronJobId} />
                 )}
               </div>
             </>
+          ) : (
+            <div className="px-6 py-10 text-center text-red-400">
+              <p>Failed to load job details.</p>
+            </div>
           )}
-        </div>
 
-        {/* Modal footer */}
-        <div className="px-6 py-4 border-t border-gray-700 sticky bottom-0 bg-gray-800">
-          <button
-            onClick={onClose}
-            className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded"
-          >
-            Close
-          </button>
+          <div className="px-6 py-4 text-right bg-gray-900">
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-white bg-gray-700 rounded-md hover:bg-gray-600"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
